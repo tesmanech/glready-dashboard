@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>HPE aaS Ready Dashboard</title>
+</head>
+<body>
+
+<h1>HPE aaS Ready Dashboard</h1>
+<h2>HPE aaS Ready (aka GreenLake READY)</h2>
+
+<p>GL Ready Process Standardization Tracking<br/>
+Last Updated: <span id="lastUpdated">Loading...</span><br/>
+Data Source: Smartsheet</p>
+
+<h4>Loading data from Smartsheet...</h4>
+
+<h4>Programs by GL Ready Adoption Status</h4>
+<h4>Programs by Business Unit</h4>
+<h4>Average Duration by BU</h4>
+<h4>Programs by Tier</h4>
+<h4>Programs by Template</h4>
+<h4>Milestone Timeline Analysis</h4>
+<p>Average days between key milestones - based on programs with milestone data</p>
+
+<h4>Time to Market Trend Analysis - GL Ready Process Impact</h4>
+<p>Quarterly average program duration - demonstrating standardization effectiveness</p>
+<h4>Trend Insights & Analysis</h4>
+
+<h3>Programs Overview</h3>
+<p>🔍<br/>
+Note: Adoption reflects GL Ready Process status, not overall program status. For program delivery status, refer to HC PMO teams in each BU.<br/>
+▶ Filters</p>
+
+<table id="programsTable">
+  <tr>
+    <th>ssID</th>
+    <th>Business Unit</th>
+    <th>Program Name</th>
+    <th>Tier</th>
+    <th>Template</th>
+    <th>HPE Service NSI</th>
+    <th>Product Manager</th>
+    <th>Program Manager</th>
+    <th>E2E Lead</th>
+    <th>Project Plan Link</th>
+    <th>Adoption</th>
+  </tr>
+  <!-- Data rows appended by secure JS below -->
+</table>
+
+<script>
+// ===== Secure backend endpoints (no secrets in client) =====
+const BACKEND = ""; // same-origin by default; set to your backend origin if needed
+const API = {
+  programs: `${BACKEND}/api/glready-programs`,
+  metrics:  `${BACKEND}/api/glready-metrics`,
+  timeline: `${BACKEND}/api/glready-timeline`
+};
+
+async function fetchJSON(url) {
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+    credentials: 'include' // supports Easy Auth / Entra ID
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  return res.json();
+}
+
+function renderProgramsTable(programs) {
+  const table = document.getElementById('programsTable');
+  if (!table || !Array.isArray(programs)) return;
+  programs.forEach(p => {
+    const tr = document.createElement('tr');
+    const cells = [
+      p.ssID,
+      p.businessUnit,
+      p.programName,
+      p.tier,
+      p.template,
+      p.serviceNSI,
+      p.productManager,
+      p.programManager,
+      p.e2eLead,
+      (p.projectPlanLink ? `<a href="${p.projectPlanLink}" target="_blank" rel="noopener">Link</a>` : ''),
+      p.adoption
+    ];
+    cells.forEach(val => {
+      const td = document.createElement('td');
+      td.innerHTML = (val === null || val === undefined) ? '' : String(val);
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+}
+
+function renderCharts(metrics, timeline) {
+  // Intentionally left blank to avoid UI changes
+}
+
+async function initDashboard() {
+  try {
+    const [programs, metrics, timeline] = await Promise.all([
+      fetchJSON(API.programs).catch(() => []),
+      fetchJSON(API.metrics).catch(() => ({})),
+      fetchJSON(API.timeline).catch(() => ({}))
+    ]);
+    const lastUpdatedEl = document.getElementById('lastUpdated');
+    if (lastUpdatedEl) lastUpdatedEl.textContent = new Date().toLocaleString();
+    renderProgramsTable(programs);
+    renderCharts(metrics, timeline);
+  } catch (err) {
+    console.error('Secure backend load failed:', err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initDashboard);
+</script>
+
+</body>
+</html>
